@@ -1,0 +1,701 @@
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.button import Button
+from kivy.uix.textinput import TextInput
+from kivy.uix.scrollview import ScrollView
+from kivy.metrics import dp, sp
+from kivy.core.window import Window
+
+import json
+import os
+
+
+class AhmedClothingApp(App):
+
+    def build(self):
+        self.title = "Ahmed Me And You Clothing"
+
+        self.customers = []
+        self.customer_id = 1
+
+        # File da zai adana bayanan customers
+        self.data_file = os.path.join(
+            self.user_data_dir,
+            "customers.json"
+        )
+
+        self.load_customers()
+
+        self.layout = BoxLayout(
+            orientation="vertical",
+            padding=dp(15),
+            spacing=dp(12)
+        )
+
+        self.show_home()
+
+        return self.layout
+
+    # ==================================================
+    # SAVE DATA
+    # ==================================================
+
+    def save_data(self):
+
+        data = {
+            "customer_id": self.customer_id,
+            "customers": self.customers
+        }
+
+        try:
+            with open(self.data_file, "w", encoding="utf-8") as file:
+                json.dump(data, file, indent=4)
+
+        except Exception as e:
+            print("Save error:", e)
+
+    # ==================================================
+    # LOAD DATA
+    # ==================================================
+
+    def load_customers(self):
+
+        if not os.path.exists(self.data_file):
+            return
+
+        try:
+            with open(self.data_file, "r", encoding="utf-8") as file:
+                data = json.load(file)
+
+            self.customers = data.get("customers", [])
+            self.customer_id = data.get(
+                "customer_id",
+                len(self.customers) + 1
+            )
+
+        except Exception as e:
+            print("Load error:", e)
+
+    # ==================================================
+    # CLEAR SCREEN
+    # ==================================================
+
+    def clear_screen(self):
+
+        self.layout.clear_widgets()
+
+    # ==================================================
+    # BUTTON
+    # ==================================================
+
+    def make_button(self, text, function):
+
+        button = Button(
+            text=text,
+            font_size=sp(20),
+            size_hint_y=None,
+            height=dp(65)
+        )
+
+        button.bind(on_release=function)
+
+        return button
+
+    # ==================================================
+    # HOME
+    # ==================================================
+
+    def show_home(self, *args):
+
+        self.clear_screen()
+
+        title = Label(
+            text="AHMED ME AND YOU CLOTHING",
+            font_size=sp(24),
+            size_hint_y=None,
+            height=dp(70)
+        )
+
+        self.layout.add_widget(title)
+
+        new_customer = self.make_button(
+            "NEW CUSTOMER",
+            self.show_new_customer
+        )
+
+        services = self.make_button(
+            "SERVICES",
+            self.show_services
+        )
+
+        customers = self.make_button(
+            "ALL CUSTOMERS",
+            self.show_customers
+        )
+
+        search = self.make_button(
+            "SEARCH CUSTOMER",
+            self.show_search
+        )
+
+        contact = self.make_button(
+            "CONTACT",
+            self.show_contact
+        )
+
+        self.layout.add_widget(new_customer)
+        self.layout.add_widget(services)
+        self.layout.add_widget(customers)
+        self.layout.add_widget(search)
+        self.layout.add_widget(contact)
+
+    # ==================================================
+    # NEW CUSTOMER
+    # ==================================================
+
+    def show_new_customer(self, *args):
+
+        self.clear_screen()
+
+        title = Label(
+            text="NEW CUSTOMER",
+            font_size=sp(24),
+            size_hint_y=None,
+            height=dp(60)
+        )
+
+        self.layout.add_widget(title)
+
+        self.name_input = TextInput(
+            hint_text="Customer Name",
+            font_size=sp(20),
+            multiline=False,
+            size_hint_y=None,
+            height=dp(60)
+        )
+
+        self.phone_input = TextInput(
+            hint_text="Phone Number",
+            font_size=sp(20),
+            multiline=False,
+            input_filter="int",
+            size_hint_y=None,
+            height=dp(60)
+        )
+
+        self.clothes_input = TextInput(
+            hint_text="What do you want to sew?",
+            font_size=sp(20),
+            multiline=False,
+            size_hint_y=None,
+            height=dp(60)
+        )
+
+        self.price_input = TextInput(
+            hint_text="Sewing Price",
+            font_size=sp(20),
+            multiline=False,
+            input_filter="float",
+            size_hint_y=None,
+            height=dp(60)
+        )
+
+        self.deposit_input = TextInput(
+            hint_text="Deposit",
+            font_size=sp(20),
+            multiline=False,
+            input_filter="float",
+            size_hint_y=None,
+            height=dp(60)
+        )
+
+        self.layout.add_widget(self.name_input)
+        self.layout.add_widget(self.phone_input)
+        self.layout.add_widget(self.clothes_input)
+        self.layout.add_widget(self.price_input)
+        self.layout.add_widget(self.deposit_input)
+
+        save = self.make_button(
+            "SAVE CUSTOMER",
+            self.save_customer
+        )
+
+        back = self.make_button(
+            "BACK",
+            self.show_home
+        )
+
+        self.layout.add_widget(save)
+        self.layout.add_widget(back)
+
+    # ==================================================
+    # SAVE CUSTOMER
+    # ==================================================
+
+    def save_customer(self, *args):
+
+        name = self.name_input.text.strip()
+        phone = self.phone_input.text.strip()
+        clothes = self.clothes_input.text.strip()
+        price_text = self.price_input.text.strip()
+        deposit_text = self.deposit_input.text.strip()
+
+        # Check name
+        if not name:
+            self.show_message(
+                "Please enter customer name."
+            )
+            return
+
+        # Check phone
+        if not phone:
+            self.show_message(
+                "Please enter phone number."
+            )
+            return
+
+        # Check clothes
+        if not clothes:
+            self.show_message(
+                "Please enter what the customer wants to sew."
+            )
+            return
+
+        # Check price
+        try:
+            price = float(price_text)
+
+        except ValueError:
+            self.show_message(
+                "Please enter a valid sewing price."
+            )
+            return
+
+        # Check deposit
+        try:
+            deposit = float(deposit_text)
+
+        except ValueError:
+            self.show_message(
+                "Please enter a valid deposit."
+            )
+            return
+
+        if price < 0:
+            self.show_message(
+                "Price cannot be negative."
+            )
+            return
+
+        if deposit < 0:
+            self.show_message(
+                "Deposit cannot be negative."
+            )
+            return
+
+        if deposit > price:
+            self.show_message(
+                "Deposit cannot be more than price."
+            )
+            return
+
+        balance = price - deposit
+
+        if balance == 0:
+            payment = "PAID"
+        else:
+            payment = "PENDING"
+
+        customer = {
+            "id": self.customer_id,
+            "name": name,
+            "phone": phone,
+            "clothes": clothes,
+            "price": price,
+            "deposit": deposit,
+            "balance": balance,
+            "payment": payment
+        }
+
+        self.customers.append(customer)
+
+        self.customer_id += 1
+
+        self.save_data()
+
+        self.show_customer_saved(customer)
+
+    # ==================================================
+    # CUSTOMER SAVED
+    # ==================================================
+
+    def show_customer_saved(self, customer):
+
+        self.clear_screen()
+
+        title = Label(
+            text="CUSTOMER SAVED",
+            font_size=sp(24),
+            size_hint_y=None,
+            height=dp(70)
+        )
+
+        self.layout.add_widget(title)
+
+        message = (
+            "Customer saved successfully!\n\n"
+            "Customer ID: " + str(customer["id"]) + "\n"
+            "Name: " + customer["name"] + "\n"
+            "Phone: " + customer["phone"] + "\n"
+            "Clothes: " + customer["clothes"] + "\n"
+            "Price: ₦" + str(customer["price"]) + "\n"
+            "Deposit: ₦" + str(customer["deposit"]) + "\n"
+            "Balance: ₦" + str(customer["balance"]) + "\n"
+            "Payment: " + customer["payment"]
+        )
+
+        label = Label(
+            text=message,
+            font_size=sp(18),
+            halign="left",
+            valign="top"
+        )
+
+        self.layout.add_widget(label)
+
+        back = self.make_button(
+            "BACK TO HOME",
+            self.show_home
+        )
+
+        self.layout.add_widget(back)
+
+    # ==================================================
+    # ALL CUSTOMERS
+    # ==================================================
+
+    def show_customers(self, *args):
+
+        self.clear_screen()
+
+        title = Label(
+            text="ALL CUSTOMERS",
+            font_size=sp(24),
+            size_hint_y=None,
+            height=dp(60)
+        )
+
+        self.layout.add_widget(title)
+
+        if len(self.customers) == 0:
+
+            label = Label(
+                text="No customers yet.",
+                font_size=sp(20)
+            )
+
+            self.layout.add_widget(label)
+
+        else:
+
+            scroll = ScrollView()
+
+            customer_box = BoxLayout(
+                orientation="vertical",
+                spacing=dp(10),
+                padding=dp(10),
+                size_hint_y=None
+            )
+
+            customer_box.bind(
+                minimum_height=customer_box.setter(
+                    "height"
+                )
+            )
+
+            for customer in self.customers:
+
+                text = (
+                    "ID: " + str(customer["id"]) + "\n"
+                    "Name: " + customer["name"] + "\n"
+                    "Phone: " + customer["phone"] + "\n"
+                    "Clothes: " + customer["clothes"] + "\n"
+                    "Price: ₦" + str(customer["price"]) + "\n"
+                    "Deposit: ₦" + str(customer["deposit"]) + "\n"
+                    "Balance: ₦" + str(customer["balance"]) + "\n"
+                    "Payment: " + customer["payment"] + "\n"
+                    "-----------------------------"
+                )
+
+                label = Label(
+                    text=text,
+                    font_size=sp(17),
+                    size_hint_y=None,
+                    height=dp(190),
+                    halign="left",
+                    valign="top"
+                )
+
+                label.bind(
+                    size=lambda instance, value:
+                    setattr(
+                        instance,
+                        "text_size",
+                        (value[0], None)
+                    )
+                )
+
+                customer_box.add_widget(label)
+
+            scroll.add_widget(customer_box)
+
+            self.layout.add_widget(scroll)
+
+        back = self.make_button(
+            "BACK TO HOME",
+            self.show_home
+        )
+
+        self.layout.add_widget(back)
+
+    # ==================================================
+    # SEARCH CUSTOMER
+    # ==================================================
+
+    def show_search(self, *args):
+
+        self.clear_screen()
+
+        title = Label(
+            text="SEARCH CUSTOMER",
+            font_size=sp(24),
+            size_hint_y=None,
+            height=dp(60)
+        )
+
+        self.layout.add_widget(title)
+
+        self.search_input = TextInput(
+            hint_text="Enter Customer ID, Name or Phone",
+            font_size=sp(19),
+            multiline=False,
+            size_hint_y=None,
+            height=dp(60)
+        )
+
+        self.layout.add_widget(self.search_input)
+
+        search_button = self.make_button(
+            "SEARCH",
+            self.search_customer
+        )
+
+        self.layout.add_widget(search_button)
+
+        back = self.make_button(
+            "BACK TO HOME",
+            self.show_home
+        )
+
+        self.layout.add_widget(back)
+
+    # ==================================================
+    # SEARCH
+    # ==================================================
+
+    def search_customer(self, *args):
+
+        search_text = self.search_input.text.strip().lower()
+
+        if not search_text:
+            self.show_message(
+                "Please enter customer ID, name or phone."
+            )
+            return
+
+        found = None
+
+        for customer in self.customers:
+
+            customer_id = str(customer["id"]).lower()
+            name = customer["name"].lower()
+            phone = customer["phone"].lower()
+
+            if (
+                search_text == customer_id
+                or search_text in name
+                or search_text in phone
+            ):
+                found = customer
+                break
+
+        if found is None:
+
+            self.show_message(
+                "Customer not found."
+            )
+
+        else:
+
+            self.show_found_customer(found)
+
+    # ==================================================
+    # SHOW FOUND CUSTOMER
+    # ==================================================
+
+    def show_found_customer(self, customer):
+
+        self.clear_screen()
+
+        title = Label(
+            text="CUSTOMER FOUND",
+            font_size=sp(24),
+            size_hint_y=None,
+            height=dp(60)
+        )
+
+        self.layout.add_widget(title)
+
+        text = (
+            "Customer ID: " + str(customer["id"]) + "\n\n"
+            "Name: " + customer["name"] + "\n\n"
+            "Phone: " + customer["phone"] + "\n\n"
+            "Clothes: " + customer["clothes"] + "\n\n"
+            "Price: ₦" + str(customer["price"]) + "\n\n"
+            "Deposit: ₦" + str(customer["deposit"]) + "\n\n"
+            "Balance: ₦" + str(customer["balance"]) + "\n\n"
+            "Payment: " + customer["payment"]
+        )
+
+        label = Label(
+            text=text,
+            font_size=sp(19),
+            halign="left",
+            valign="top"
+        )
+
+        self.layout.add_widget(label)
+
+        back = self.make_button(
+            "BACK",
+            self.show_search
+        )
+
+        self.layout.add_widget(back)
+
+    # ==================================================
+    # SERVICES
+    # ==================================================
+
+    def show_services(self, *args):
+
+        self.clear_screen()
+
+        title = Label(
+            text="OUR SERVICES",
+            font_size=sp(24),
+            size_hint_y=None,
+            height=dp(70)
+        )
+
+        self.layout.add_widget(title)
+
+        services_text = (
+            "1. Sewing\n\n"
+            "2. Fashion Design\n\n"
+            "3. Clothes Alteration\n\n"
+            "4. Traditional Clothes\n\n"
+            "5. Custom Design"
+        )
+
+        label = Label(
+            text=services_text,
+            font_size=sp(21)
+        )
+
+        self.layout.add_widget(label)
+
+        back = self.make_button(
+            "BACK TO HOME",
+            self.show_home
+        )
+
+        self.layout.add_widget(back)
+
+    # ==================================================
+    # CONTACT
+    # ==================================================
+
+    def show_contact(self, *args):
+
+        self.clear_screen()
+
+        title = Label(
+            text="CONTACT US",
+            font_size=sp(24),
+            size_hint_y=None,
+            height=dp(70)
+        )
+
+        self.layout.add_widget(title)
+
+        contact_text = (
+            "AHMED ME AND YOU CLOTHING\n\n"
+            "Phone: 09122956211\n\n"
+            "Location: Nigeria\n\n"
+            "Fashion • Sewing • Design"
+        )
+
+        label = Label(
+            text=contact_text,
+            font_size=sp(20)
+        )
+
+        self.layout.add_widget(label)
+
+        back = self.make_button(
+            "BACK TO HOME",
+            self.show_home
+        )
+
+        self.layout.add_widget(back)
+
+    # ==================================================
+    # MESSAGE
+    # ==================================================
+
+    def show_message(self, message):
+
+        self.clear_screen()
+
+        title = Label(
+            text="MESSAGE",
+            font_size=sp(24),
+            size_hint_y=None,
+            height=dp(70)
+        )
+
+        self.layout.add_widget(title)
+
+        label = Label(
+            text=message,
+            font_size=sp(20)
+        )
+
+        self.layout.add_widget(label)
+
+        back = self.make_button(
+            "BACK",
+            self.show_home
+        )
+
+        self.layout.add_widget(back)
+
+
+# ======================================================
+# START APPLICATION
+# ======================================================
+
+if __name__ == "__main__":
+    AhmedClothingApp().run()
